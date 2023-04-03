@@ -1,0 +1,61 @@
+pipeline{
+
+	agent('create-node')
+	{
+
+		environment {
+			DOCKERHUB_CREDENTIALS=credentials('dockerhub-cred')
+		}
+
+		stages {
+
+			stage('Build') {
+
+				steps {
+					sh 'docker build -t dhpdockerhub/hi-leumi-py .'
+				}
+			}
+
+			stage('Login') {
+
+				steps {
+					sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+				}
+			}
+
+
+			stage('Push') {
+
+				steps {
+					sh 'docker push dhpdockerhub/hi-leumi-py'
+				}
+			}
+		}
+	}
+	
+	agent('execute-node')
+	{
+		stage('Deploy to K8s')
+		{
+			steps
+			{		
+				script
+				{
+					try
+					{
+						git credentialsId: 'cf4e08c0-919d-408f-8ec1-576dd10d1393', url: 'https://github.com/dhponp/Leumi.git'
+						
+						sh 'kubectl apply -f deployment.yml'
+
+					}catch(error){ }
+				}
+			}
+		}
+	}
+
+	post {
+		always {
+			sh 'docker logout'
+		}
+	}
+}
