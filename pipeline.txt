@@ -12,7 +12,8 @@ pipeline{
 			stage('Build') {
 
 				steps {
-					sh 'docker build -t dhpdockerhub/hi-leumi-py .'
+					//Dockerfile in the repo
+					sh 'docker build -t https://github.com/dhponp/Leumi.git'
 				}
 			}
 
